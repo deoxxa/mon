@@ -4,7 +4,7 @@ OBJ = $(SRC:.c=.o)
 CFLAGS = -D_GNU_SOURCE -std=c99 -I deps/
 
 mon: $(OBJ)
-	$(CC) $(OBJ) -o $@
+	$(CC) $(OBJ) -static -o $@
 
 .SUFFIXES: .c .o
 .c.o:
