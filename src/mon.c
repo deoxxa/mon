@@ -40,7 +40,6 @@ static const char *prefix = NULL;
 typedef struct {
   const char *pidfile;
   const char *mon_pidfile;
-  const char *logfile;
   const char *on_error;
   const char *on_restart;
   int64_t last_restart_at;
@@ -208,8 +207,8 @@ show_status_of(const char *pidfile) {
  */
 
 void
-redirect_stdio_to(const char *file) {
-  int logfd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0755);
+redirect_stdio() {
+  int logfd = open("/dev/null", O_WRONLY, 0);
   int nullfd = open("/dev/null", O_RDONLY, 0);
 
   if (-1 == logfd) {
@@ -390,16 +389,6 @@ exec: {
 }
 
 /*
- * --log <path>
- */
-
-static void
-on_log(command_t *self) {
-  monitor_t *monitor = (monitor_t *) self->data;
-  monitor->logfile = self->arg;
-}
-
-/*
  * --sleep <sec>
  */
 
@@ -498,7 +487,6 @@ main(int argc, char **argv){
   monitor.mon_pidfile = NULL;
   monitor.on_restart = NULL;
   monitor.on_error = NULL;
-  monitor.logfile = "mon.log";
   monitor.daemon = 0;
   monitor.sleepsec = 1;
   monitor.max_attempts = 10;
@@ -511,7 +499,6 @@ main(int argc, char **argv){
   command_init(&program, "mon", VERSION);
   program.data = &monitor;
   program.usage = "[options] <command>";
-  command_option(&program, "-l", "--log <path>", "specify logfile [mon.log]", on_log);
   command_option(&program, "-s", "--sleep <sec>", "sleep seconds before re-executing [1]", on_sleep);
   command_option(&program, "-S", "--status", "check status of --pidfile", on_status);
   command_option(&program, "-p", "--pidfile <path>", "write pid to <path>", on_pidfile);
@@ -540,7 +527,7 @@ main(int argc, char **argv){
   // daemonize
   if (monitor.daemon) {
     daemonize();
-    redirect_stdio_to(monitor.logfile);
+    redirect_stdio();
   }
 
   // write mon pidfile
